@@ -6,8 +6,9 @@ let currentBet = { amount: 0, color: null };
 let currentRoundId = "";
 let lastFirebaseData = null; // Stocke les dernières infos reçues
 let lastTickAngle = 0;
-//const tickSound = new Audio('tick.mp3'); // Trouve un petit son de clic sec
-//tickSound.volume = 0.2;
+let isProcessingBet = false;
+let lastBetTimestamp = 0;
+let hasPlacedBetThisRound = false;
 
 window.addEventListener('DOMContentLoaded', () => {
     generateWheel();
@@ -30,24 +31,54 @@ async function initRouletteSync() {
         }
     } catch (e) { console.error(e); }
 
-    // 2. Écouteur Firebase
+    let lastHandledRoundId = ""; // Variable locale pour suivre les changements de tour
+
     window.fs.onSnapshot(rouletteRef, (doc) => {
         const data = doc.data();
         if (!data) return;
-        lastFirebaseData = data; // On garde les données en mémoire
+        lastFirebaseData = data; 
         
         currentRoundId = data.currentRoundId;
         updateTimerUI(data.timeLeft, data.status);
         
-        if (data.status === "spinning" && !isSpinning) startSpin(data.winningNumber);
-        if (data.status === "betting") {
-    // On cache la liste dès que les paris recommencent
-    const list = document.getElementById('winners-list');
-    if (list) {
-        list.classList.add('opacity-0', 'scale-95');
-        setTimeout(() => document.getElementById('winners-container').innerHTML = '', 500);
-    }
-}
+        // GESTION DU SPIN
+        if (data.status === "spinning" && !isSpinning) {
+            startSpin(data.winningNumber);
+        }
+
+        // GESTION DU NOUVEAU TOUR (RESET)
+        // On ne reset que si l'ID du round a changé sur Firebase
+        if (data.status === "betting" && data.currentRoundId !== lastHandledRoundId) {
+            lastHandledRoundId = data.currentRoundId; // On mémorise le nouveau tour
+            
+            // 1. Libération des sécurités locales
+            isSpinning = false;
+            hasPlacedBetThisRound = false; 
+            currentBet = { amount: 0, color: null };
+
+            // 2. Réactivation physique des boutons de mise
+            const betButtons = document.querySelectorAll('button[onclick^="placeBet"]');
+            betButtons.forEach(btn => {
+                btn.style.pointerEvents = "auto";
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+                
+                // Restauration de l'action si elle avait été supprimée
+                if (btn.getAttribute('data-onclick')) {
+                    btn.setAttribute('onclick', btn.getAttribute('data-onclick'));
+                }
+            });
+
+            // 3. Nettoyage de l'interface des gagnants
+            const list = document.getElementById('winners-list');
+            if (list) {
+                list.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    const container = document.getElementById('winners-container');
+                    if(container) container.innerHTML = '';
+                }, 500);
+            }
+        }
     });
 
     // 3. LA BOUCLE MAGIQUE (S'exécute toutes les secondes localement)
@@ -119,17 +150,26 @@ function updateTimerUI(time, status) {
 }
 
 function startSpin(winningNumber) {
+    if (isSpinning) return;
     isSpinning = true;
+
     const wheel = document.getElementById('wheel-container');
-    const sliceAngle = 360 / wheelOrder.length; // 24° par case
+    const sliceAngle = 360 / wheelOrder.length;
     const index = wheelOrder.indexOf(winningNumber);
     
-    const extraSpins = (10 + Math.floor(Math.random() * 2)) * 360;
+    // --- 1. RESET INSTANTANÉ (Le secret est ici) ---
+    wheel.style.transition = "none"; // On coupe l'animation
+    wheel.style.transform = "rotate(0deg)"; // On remet à zéro direct
     
-    // CORRECTION : On utilise "- (sliceAngle / 2)" pour centrer 
-    // correctement le numéro visuel par rapport aux logs.
-    const finalRotation = extraSpins + (360 - (index * sliceAngle)) - 90 - (sliceAngle / 2);
+    // On force le navigateur à valider le changement immédiatement
+    void wheel.offsetWidth; 
 
+    // --- 2. CALCUL DE LA ROTATION ---
+    const extraSpins = 10 * 360; // 10 tours pour la vitesse
+    // On aligne le chiffre gagnant sous la flèche (270° = haut du cercle)
+    const finalRotation = extraSpins + (270 - (index * sliceAngle) - (sliceAngle / 2));
+
+    // --- 3. LANCEMENT DE L'ANIMATION RÉELLE ---
     wheel.style.transition = "transform 8s cubic-bezier(0.15, 0, 0.1, 1)";
     wheel.style.transform = `rotate(${finalRotation}deg)`;
 
@@ -178,8 +218,6 @@ function checkGains(winningNumber) {
     if (typeof updateGlobalStats === "function") {
         updateGlobalStats(profit, isWin, true); // (profit, est-ce un win, compter le round)
     }
-
-    currentBet = { amount: 0, color: null };
 }
 
 function addWinnerBubble(username, amount) {
@@ -204,16 +242,50 @@ function addWinnerBubble(username, amount) {
 async function placeBet(color) {
     const input = document.getElementById('roulette-bet-input');
     const amount = parseFloat(input.value);
-    if (isNaN(amount) || amount <= 0 || amount > balance) return showNotification("Montant invalide", "error");
-    if (isSpinning || currentBet.amount > 0) return showNotification("Action impossible", "error");
 
-    currentBet = { amount, color };
-    updateBalance(balance - amount);
-    await saveData();
-    await window.fs.addDoc(window.fs.collection(window.db_online, "roulette_bets"), {
-        user: activeUser, amount: amount, color: color,
-        profilePic: stats.profilePic || "", timestamp: window.fs.serverTimestamp()
+    // BLOCAGE STRICT : Si on a déjà misé durant ce round, on sort direct
+    if (hasPlacedBetThisRound || isSpinning || lastFirebaseData?.status !== "betting") {
+        return showNotification("Action impossible", "error");
+    }
+
+    if (isNaN(amount) || amount <= 0 || amount > balance) {
+        return showNotification("Montant invalide", "error");
+    }
+
+    // ON VERROUILLE IMMÉDIATEMENT
+    hasPlacedBetThisRound = true;
+
+    // Effet visuel immédiat (les boutons deviennent gris et incliquables)
+    const betButtons = document.querySelectorAll('button[onclick^="placeBet"]');
+    betButtons.forEach(btn => {
+        btn.style.opacity = "0.5";
+        btn.style.pointerEvents = "none";
     });
+
+    try {
+        currentBet = { amount, color };
+        updateBalance(balance - amount);
+        await saveData();
+        
+        await window.fs.addDoc(window.fs.collection(window.db_online, "roulette_bets"), {
+            user: activeUser, 
+            amount: amount, 
+            color: color,
+            profilePic: stats.profilePic || "", 
+            timestamp: window.fs.serverTimestamp()
+        });
+        
+        showNotification("Mise acceptée !", "success");
+    } catch (error) {
+        // Uniquement en cas d'erreur réseau, on redonne la main
+        hasPlacedBetThisRound = false;
+        currentBet = { amount: 0, color: null };
+        updateBalance(balance + amount);
+        betButtons.forEach(btn => {
+            btn.style.opacity = "1";
+            btn.style.pointerEvents = "auto";
+        });
+    }
 }
 
 function initBetsListener() {
