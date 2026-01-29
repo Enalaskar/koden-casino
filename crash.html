@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>KODEN | ROCKET_GAME</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+        getFirestore, doc, getDoc, updateDoc, increment, setDoc, deleteDoc, collection,
+        query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, getDocs 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBzucz2akqXT-LQ5ENHqz3U2yaJciJmM04",
+    authDomain: "koden-casino.firebaseapp.com",
+    projectId: "koden-casino",
+    storageBucket: "koden-casino.firebasestorage.app",
+    messagingSenderId: "730117054841",
+    appId: "1:730117054841:web:e34b5b14fd825d9ce2cfa8",
+    measurementId: "G-8BDP8RLVB3"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.db_online = db;
+  window.fs = { 
+        doc, getDoc, updateDoc, increment, setDoc, deleteDoc, collection,
+        query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, getDocs 
+    };
+  
+  console.log("Koden_System: Connexion Firebase établie.");
+</script>
+</head>
+<body class="h-screen bg-[#0F0F12] text-white overflow-hidden font-sans flex flex-col p-4 gap-4">
+
+    <nav class="h-16 bg-[#141417] border border-[#1f1f21] rounded-2xl flex items-center justify-between px-6 shrink-0 shadow-xl relative">
+    <div class="flex items-center gap-6">
+        <a href="index.html" class="flex items-center gap-2 group">
+            <div class="w-1 h-5 bg-[#8b5cf6] rounded-full group-hover:bg-[#fbbf24] transition-colors"></div>
+            <span class="text-xl font-black italic tracking-tighter uppercase">Koden</span>
+        </a>
+    </div>
+
+    <div class="flex items-center gap-4">
+
+        <div class="flex items-center gap-3 bg-[#0F0F12] border border-yellow-500/30 px-4 py-1.5 rounded-xl">
+            <img src="coin.png" class="w-4 h-4 animate-pulse" alt="coin">
+            <span class="text-[13px] font-mono font-bold text-[#fbbf24] balance-display">0.00</span>
+        </div>
+
+        <div class="relative">
+    <button onclick="toggleProfileCard()" class="flex items-center gap-3 bg-[#141417]/50 hover:bg-[#1c1c21] border border-white/5 p-1.5 pr-4 rounded-xl transition-all duration-300 group relative">
+    
+    <div id="user-pp-container" class="w-10 h-10 rounded-lg bg-[#0F0F12] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-[#8b5cf6]/50 transition-colors">
+        <img id="display-pp" src="" class="w-full h-full object-cover hidden" alt="pp">
+        <span id="display-emoji" class="text-base opacity-50">👤</span>
+    </div>
+
+    <div class="flex flex-col items-start leading-none gap-1">
+        <div class="flex items-center gap-1.5">
+            <span id="nav-username" class="text-[11px] font-black uppercase tracking-wider text-white/90">User</span>
+            <div class="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e]"></div>
+        </div>
+        <span class="text-[7px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Session_Active</span>
+    </div>
+
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-zinc-600 group-hover:text-white transition-colors ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
+    </svg>
+</button>
+
+    <div id="profile-card" class="hidden absolute top-16 right-0 w-72 bg-[#141417] border-2 border-[#1f1f21] rounded-2xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[100] animate-fadeIn">
+    <div class="flex flex-col gap-5">
+        <div class="text-center border-b border-[#1f1f21] pb-4">
+            <p class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">User_Terminal</p>
+        </div>
+        
+        <div class="space-y-2">
+            <button onclick="changePP()" class="w-full bg-[#8b5cf6]/10 border border-[#8b5cf6]/20 text-[#8b5cf6] font-black py-3 rounded-xl uppercase italic text-[10px] hover:bg-[#8b5cf6] hover:text-white transition-all mb-2">
+                Modifier la Photo (URL)
+            </button>
+
+            <button onclick="logout()" class="w-full bg-[#1c1c21] border border-zinc-800 text-zinc-300 font-black py-3 rounded-xl uppercase italic text-[10px] hover:bg-white/5 transition-all">
+                Se Déconnecter
+            </button>
+
+            <button onclick="deleteAccount()" class="w-full bg-[#ef4444]/5 border border-[#ef4444]/20 text-[#ef4444] font-black py-3 rounded-xl uppercase italic text-[10px] hover:bg-[#ef4444] hover:text-white transition-all">
+                Supprimer le compte
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+    </div>
+</nav>
+
+    <main class="flex-1 flex gap-4 overflow-hidden">
+        
+        <aside class="w-80 bg-[#141417] border border-[#1f1f21] rounded-3xl p-6 flex flex-col gap-6 shadow-2xl">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[9px] font-black text-zinc-600 uppercase tracking-widest block mb-2">Mise</label>
+                    <input id="bet-amount" type="number" value="10" step="1" class="w-full bg-[#0F0F12] border border-[#1f1f21] rounded-xl p-4 text-sm font-bold outline-none focus:border-[#8b5cf6]/50 transition-all text-white">
+                </div>
+                <button id="bet-btn" class="w-full bg-[#22c55e] text-black font-black py-5 rounded-2xl uppercase italic text-sm hover:brightness-110 active:scale-95 transition-all">Lancer la Fusée</button>
+            </div>
+
+            <div class="flex-1 flex flex-col min-h-0 border-t border-zinc-800/50 pt-4">
+                <label class="text-[9px] font-black text-zinc-600 uppercase tracking-widest block mb-2">System_Logs</label>
+                <div id="logs-container" class="flex-1 bg-[#0F0F12] border border-[#1f1f21] rounded-2xl p-4 overflow-y-auto space-y-2 font-mono text-[10px] custom-scroll">
+                    </div>
+            </div>
+        </aside>
+
+        <section class="flex-1 bg-[#141417] border border-[#1f1f21] rounded-3xl p-4 flex items-center justify-center shadow-2xl relative overflow-hidden">
+            <div id="multiplier" class="absolute top-10 left-1/2 -translate-x-1/2 text-8xl font-black italic tracking-tighter z-20 text-white">1.00X</div>
+            <canvas id="crash-chart" class="w-full h-full rounded-2xl"></canvas>
+        </section>
+
+    </main>
+
+    <footer class="h-10 bg-[#141417] border border-[#1f1f21] rounded-xl shrink-0 flex items-center justify-between px-6 text-[9px] font-mono shadow-lg">
+        <div class="flex items-center gap-2">
+            <span class="text-[#22c55e] font-bold animate-pulse">● ROCKET_PROTOCOL_ACTIVE</span>
+            <span class="text-zinc-700">| VER_1.2.0 |</span>
+        </div>
+        <span class="text-zinc-600 uppercase tracking-widest">KODEN_TERMINAL_SESSION</span>
+    </footer>
+
+    <script src="fusee.js"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>

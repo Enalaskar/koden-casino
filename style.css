@@ -1,0 +1,281 @@
+body {
+    background-color: #080808;
+    font-family: 'Inter', sans-serif;
+}
+
+.custom-scroll::-webkit-scrollbar { width: 4px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #2a2a2c; border-radius: 10px; }
+
+.bet-item {
+    border-bottom: 1px solid #1f1f21;
+    background: transparent;
+    transition: background 0.2s;
+}
+
+.bet-item:hover {
+    background: #1a1a1c;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.new-bet { animation: slideDown 0.3s ease-out; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#lobby-page {
+    animation: fadeIn 0.8s ease-out;
+}
+
+.custom-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #1f1f21;
+    border-radius: 10px;
+}
+
+.notification {
+    animation: slideIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.notif-exit {
+    animation: slideOut 0.3s ease-in forwards;
+}
+
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+.scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 5;
+    background: linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(34, 197, 94, 0.05) 50%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    opacity: 0.1;
+    position: absolute;
+    bottom: 100%;
+    animation: scanline 4s linear infinite;
+}
+
+@keyframes scanline {
+    0% { bottom: 100%; }
+    100% { bottom: -100px; }
+}
+
+.koden-card-active {
+    position: relative;
+    overflow: hidden;
+}
+
+.koden-card-active::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(transparent, transparent, transparent, #22c55e);
+    animation: rotate 6s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.koden-card-active:hover::before {
+    opacity: 0.2;
+}
+
+@keyframes rotate {
+    100% { transform: rotate(360deg); }
+}
+
+#logs-container div {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#logs-container div:first-child {
+    font-weight: bold;
+    background: linear-gradient(to right, rgba(139, 92, 246, 0.1), transparent);
+}
+
+.balance-display {
+    color: #fbbf24 !important;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #a78bfa;
+}
+
+#leaderboard-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+#leaderboard-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#leaderboard-container::-webkit-scrollbar-thumb {
+    background: #1f1f21;
+    border-radius: 10px;
+}
+
+#leaderboard-container::-webkit-scrollbar-thumb:hover {
+    background: #2a2a2d;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 1; transform: skewX(-10deg) scale(1); }
+    50% { opacity: 0.8; transform: skewX(-10deg) scale(1.05); }
+}
+
+.animate-pulse {
+    animation: pulse-glow 2s infinite ease-in-out;
+}
+
+#user-rank {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slideDown {
+    animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+#notification-container div {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+
+button[onclick="toggleProfileCard()"] {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Dans style.css */
+.card-baccarat {
+    width: 80px;
+    height: 120px;
+    background: #1a1a1f;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    animation: dealCard 0.5s ease-out forwards;
+}
+
+@keyframes dealCard {
+    from { transform: translateY(-200px) rotate(20deg); opacity: 0; }
+    to { transform: translateY(0) rotate(0deg); opacity: 1; }
+}
+
+.card-slot {
+    width: 80px;
+    height: 110px;
+    background: white;
+    color: black;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+.card-red { color: #ef4444; }
+.card-white { color: #ffffff; }
+
+@keyframes dealCard {
+    0% { transform: translateY(-300px) rotate(45deg); opacity: 0; }
+    100% { transform: translateY(0) rotate(0deg); opacity: 1; }
+}
+
+/* Ajoute ça dans tes styles */
+.rank-ultimate {
+    background: linear-gradient(90deg, #fff, #8b5cf6, #fff);
+    background-size: 200% auto;
+    -webkit-text-fill-color: transparent;
+    animation: shine 2s linear infinite;
+    font-weight: 900;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+@keyframes shine {
+    to { background-position: 200% center; }
+}
+
+.clip-path-triangle { clip-path: polygon(100% 0, 0 0, 50% 100%); }
+
+@keyframes fadeInLeft {
+    0% { transform: translateX(-20px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+.animate-fadeInLeft {
+    animation: fadeInLeft 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+#wheel-container {
+    background: radial-gradient(circle, #2a2a2e 0%, #09090b 100%);
+    border: 12px solid #1a1a1e;
+    box-shadow: 
+        0 0 0 4px #27272a, /* Bordure fine externe */
+        inset 0 0 60px rgba(0,0,0,1), /* Ombre profonde interne */
+        0 0 40px rgba(139, 92, 246, 0.15); /* Halo violet */
+    position: relative;
+}
+
+/* L'indicateur (la flèche) en mode premium */
+#wheel-arrow {
+    filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.6));
+    z-index: 100;
+}
+
+/* Effet de reflet vitre sur toute la roue */
+#wheel-container::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0.05) 100%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Effet de reflet sur la vitre de la roue */
+#wheel-container::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(
+        135deg, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0) 50%, 
+        rgba(255,255,255,0.05) 100%
+    );
+    pointer-events: none;
+    border-radius: 50%;
+}

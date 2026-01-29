@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>KODEN | BLACKJACK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { 
+          getFirestore, doc, getDoc, setDoc, updateDoc, increment, deleteDoc,
+          collection, query, orderBy, limit, onSnapshot, addDoc, 
+          serverTimestamp, getDocs 
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBzucz2akqXT-LQ5ENHqz3U2yaJciJmM04",
+        authDomain: "koden-casino.firebaseapp.com",
+        projectId: "koden-casino",
+        storageBucket: "koden-casino.firebasestorage.app",
+        messagingSenderId: "730117054841",
+        appId: "1:730117054841:web:e34b5b14fd825d9ce2cfa8"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      window.db_online = getFirestore(app);
+      window.auth = getAuth(app);
+      
+      // Bridge corrigé avec deleteDoc
+      window.fs = { doc, getDoc, updateDoc, increment, setDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp, getDocs };
+
+      onAuthStateChanged(window.auth, (user) => {
+        if (user && typeof refreshUserData === "function") refreshUserData();
+      });
+    </script>
+</head>
+<body class="h-screen bg-[#0F0F12] text-white overflow-hidden font-sans flex flex-col p-4 gap-4">
+
+<nav class="h-16 bg-[#141417] border border-[#1f1f21] rounded-2xl flex items-center justify-between px-6 shrink-0 shadow-xl relative">
+    <div class="flex items-center gap-6">
+        <a href="index.html" class="flex items-center gap-2 group">
+            <div class="w-1 h-5 bg-[#8b5cf6] rounded-full group-hover:bg-[#fbbf24] transition-colors"></div>
+            <span class="text-xl font-black italic tracking-tighter uppercase">Koden</span>
+        </a>
+    </div>
+
+    <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 bg-[#0F0F12] border border-yellow-500/30 px-4 py-1.5 rounded-xl">
+            <img src="coin.png" class="w-4 h-4 animate-pulse" alt="coin">
+            <span class="text-[13px] font-mono font-bold text-[#fbbf24] balance-display">0.00</span>
+        </div>
+
+        <div class="relative">
+            <button onclick="toggleProfileCard()" class="flex items-center gap-3 bg-[#141417]/50 border border-white/5 p-1.5 pr-4 rounded-xl transition-all group">
+                <div id="user-pp-container" class="w-10 h-10 rounded-lg bg-[#0F0F12] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                    <img id="display-pp" src="" class="w-full h-full object-cover hidden" alt="pp">
+                    <span id="display-emoji" class="text-base opacity-50">👤</span>
+                </div>
+                <div class="flex flex-col items-start leading-none gap-1">
+                    <div class="flex items-center gap-1.5">
+                        <span id="nav-username" class="text-[11px] font-black uppercase tracking-wider text-white/90">User</span>
+                        <div class="w-1.5 h-1.5 rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e]"></div>
+                    </div>
+                    <span class="text-[7px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Session_Active</span>
+                </div>
+            </button>
+            
+            <div id="profile-card" class="hidden absolute top-16 right-0 w-72 bg-[#141417] border-2 border-[#1f1f21] rounded-2xl p-6 shadow-2xl z-[100]">
+                <button onclick="logout()" class="w-full bg-[#1c1c21] border border-zinc-800 text-zinc-300 font-black py-3 rounded-xl uppercase italic text-[10px] hover:bg-white/5 transition-all">Se Déconnecter</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="flex-1 flex gap-6 p-4 overflow-hidden">
+    <div class="w-80 flex flex-col gap-4 bg-[#141417] border border-white/5 rounded-[2rem] p-6 shadow-2xl">
+        <h2 class="text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">Mise</h2>
+        <div class="space-y-2">
+            <div class="bg-[#0F0F12] p-2 rounded-xl border border-white/5 flex gap-2">
+                <input type="number" id="roulette-bet-input" value="10" class="flex-1 bg-transparent px-2 font-mono font-bold text-xs outline-none text-[#fbbf24]">
+            </div>
+        </div>
+        <div class="flex flex-col gap-3 mt-4">
+            <button onclick="placeBet('red')" class="bg-[#cc1e1e] p-4 rounded-2xl font-black italic uppercase text-sm hover:scale-[1.02] transition-all">Rouge x2</button>
+            <button onclick="placeBet('black')" class="bg-[#1a1a1e] border border-white/10 p-4 rounded-2xl font-black italic uppercase text-sm hover:scale-[1.02] transition-all">Noir x2</button>
+            <button onclick="placeBet('green')" class="bg-[#22c55e] p-4 rounded-2xl font-black italic uppercase text-sm hover:scale-[1.02] transition-all">Vert x14</button>
+        </div>
+        <div class="mt-6 border-t border-white/5 pt-4 overflow-y-auto custom-scroll">
+            <span class="text-[9px] font-black uppercase text-zinc-700 tracking-[0.2em]">Live_Bets</span>
+            <div id="all-bets-log" class="mt-3 space-y-2"></div>
+        </div>
+    </div>
+
+    <div class="flex-1 bg-[#141417]/30 border border-white/5 rounded-[3rem] flex flex-col items-center justify-center relative shadow-inner">
+
+        <div id="winners-list" class="absolute top-12 left-12 flex flex-col gap-2 transition-all duration-500 opacity-0 scale-95 pointer-events-none">
+    <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">Derniers Gagnants</span>
+    <div id="winners-container" class="flex flex-col gap-2">
+        </div>
+</div>
+
+        <div id="timer-container" class="absolute top-12 right-12 w-28 h-28 flex items-center justify-center bg-[#141417] rounded-full shadow-2xl border border-white/5">
+            <svg class="w-full h-full rotate-[-90deg] scale-110">
+                <circle cx="56" cy="56" r="50" stroke="currentColor" stroke-width="4" fill="transparent" class="text-white/5"/>
+                <circle id="timer-bar" cx="56" cy="56" r="50" stroke="#8b5cf6" stroke-width="6" fill="transparent" stroke-dasharray="314.16" stroke-dashoffset="0" class="transition-all duration-1000 ease-linear shadow-[0_0_15px_#8b5cf6]"/>
+            </svg>
+            <span id="timer-text" class="absolute text-3xl font-black italic">15</span>
+        </div>
+
+        <div class="relative w-[450px] h-[450px] flex items-center justify-center">
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2 z-30 drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]">
+                <div class="w-8 h-8 bg-[#fbbf24] transition-transform duration-75" id="wheel-arrow" style="clip-path: polygon(100% 0, 0 0, 50% 100%);"></div>
+            </div>
+            <div id="wheel-container" class="w-full h-full rounded-full border-[12px] border-[#1a1a1e] shadow-[0_0_80px_rgba(0,0,0,0.8)] relative overflow-hidden transition-transform">
+                <canvas id="roulette-canvas" width="500" height="500" class="w-full h-full"></canvas>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="h-10 bg-[#141417] border border-[#1f1f21] rounded-xl shrink-0 flex items-center justify-between px-6 text-[9px] font-mono shadow-lg">
+        <div class="flex items-center gap-2">
+            <span class="text-[#22c55e] font-bold animate-pulse">● ROULETTE_PROTOCOL_ACTIVE</span>
+            <span class="text-zinc-700">| VER_1.2.0 |</span>
+        </div>
+        <span class="text-zinc-600 uppercase tracking-widest">KODEN_TERMINAL_SESSION</span>
+</footer>
+
+<script src="script.js"></script>
+<script src="roulette.js"></script>
+<div id="notification-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+</body>
+</html>

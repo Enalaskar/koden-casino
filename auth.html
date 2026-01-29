@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>KODEN | Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#0F0F12] text-white font-sans h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-[#141417] border border-[#1f1f21] rounded-3xl p-8 shadow-2xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-black italic tracking-tighter uppercase mb-2">Koden_Auth</h1>
+            <p id="auth-status" class="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Veuillez vous identifier</p>
+            <img src="logo-l4.gif" alt="Logo" class="relative w-full h-full object-contain rounded-2xl border border-white/10 shadow-2xl">
+        </div>
+
+        <form id="auth-form" class="space-y-4">
+            <div>
+                <label class="text-[9px] font-black text-zinc-600 uppercase tracking-widest block mb-2">Username</label>
+                <input id="auth-user" type="text" required class="w-full bg-[#0F0F12] border border-[#1f1f21] rounded-xl p-4 text-sm font-bold outline-none focus:border-[#8b5cf6]/50 transition-all">
+            </div>
+            <div>
+                <label class="text-[9px] font-black text-zinc-600 uppercase tracking-widest block mb-2">Password</label>
+                <input id="auth-pass" type="password" required class="w-full bg-[#0F0F12] border border-[#1f1f21] rounded-xl p-4 text-sm font-bold outline-none focus:border-[#8b5cf6]/50 transition-all">
+            </div>
+            
+            <div class="flex flex-col gap-3 pt-4">
+                <button type="button" onclick="handleLogin(event)" class="w-full bg-[#8b5cf6] text-black font-black py-4 rounded-xl uppercase italic text-xs tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)]">SE CONNECTER</button>
+                <button type="button" onclick="handleRegister()" class="w-full bg-transparent border border-zinc-800 text-zinc-500 font-bold py-4 rounded-xl uppercase text-[10px] tracking-widest hover:border-zinc-500 hover:text-white transition-all">CRÉER UN COMPTE</button>
+            </div>
+        </form>
+    </div>
+    <script type="module">
+
+window.showNotification = function(message, type = "info") {
+    const container = document.getElementById('notification-container');
+    if(!container) return;
+
+    const toast = document.createElement('div');
+    const colors = { success: "#22c55e", error: "#ef4444", info: "#8b5cf6" };
+    
+    toast.className = "bg-[#141417] border-l-4 px-6 py-4 rounded-xl flex items-center gap-4 pointer-events-auto min-w-[300px] shadow-2xl mb-2 transition-all duration-500 opacity-0 translate-y-[-20px]";
+    toast.style.borderColor = colors[type];
+
+    toast.innerHTML = `
+        <div class="flex-1">
+            <p class="text-[10px] font-black uppercase tracking-widest" style="color: ${colors[type]}">
+                ${type === 'success' ? 'AUTH_OK' : 'AUTH_ERROR'}
+            </p>
+            <p class="text-xs font-bold text-white">${message}</p>
+        </div>
+    `;
+
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove('opacity-0', 'translate-y-[-20px]');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-[-20px]');
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+}
+
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBzucz2akqXT-LQ5ENHqz3U2yaJciJmM04",
+    authDomain: "koden-casino.firebaseapp.com",
+    projectId: "koden-casino",
+    storageBucket: "koden-casino.firebasestorage.app",
+    messagingSenderId: "730117054841",
+    appId: "1:730117054841:web:e34b5b14fd825d9ce2cfa8",
+    measurementId: "G-8BDP8RLVB3"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const firestoreDb = getFirestore(app);
+
+  window.handleLogin = async (e) => {
+    if(e) e.preventDefault();
+    const user = document.getElementById('auth-user').value.trim();
+    const pass = document.getElementById('auth-pass').value;
+
+    if(!user || !pass) return alert("Remplis tous les champs");
+
+    try {
+      const userRef = doc(firestoreDb, "users", user);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        if (data.password === pass) {
+          localStorage.setItem('active_session', user);
+          let localDb = JSON.parse(localStorage.getItem('koden_db')) || {};
+          localDb[user] = data;
+          localStorage.setItem('koden_db', JSON.stringify(localDb));
+          
+          window.location.href = "index.html";
+        } else {
+          showNotification(`Mot de passe incorrect`, "error");
+        }
+      } else {
+        showNotification(`Utilisateur introuvable`, "error");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Erreur de connexion au Cloud : " + error.message);
+    }
+  };
+
+  window.handleRegister = async () => {
+    const user = document.getElementById('auth-user').value.trim();
+    const pass = document.getElementById('auth-pass').value;
+
+    if(user.length < 3) return alert("Pseudo trop court");
+
+    try {
+      const userRef = doc(firestoreDb, "users", user);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        showNotification(`Pseudo déjà pris !`, "error");
+      } else {
+        const newUser = {
+          password: pass,
+          balance: 10.00,
+          stats: { totalProfit: 0, rounds: 0, wins: 0 },
+          avatar: ""
+        };
+        await setDoc(userRef, newUser);
+        showNotification(`Compte créé ! Tu peux maintenant te connecter.`, "success");
+      }
+    } catch (error) {
+      alert("Erreur création : " + error.message);
+    }
+  };
+</script>
+
+    <script src="auth.js" defer></script>
+    <div id="notification-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+</body>
+</html>
