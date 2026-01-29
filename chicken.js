@@ -4,7 +4,7 @@ let chickenProfit = 1.00;
 let revealedCount = 0;
 let chickenBetAmount = 0;
 let isProcessing = false;
-const BONES_COUNT = 10; 
+const BONES_COUNT = 7; 
 let currentBet = 0;
 
 const gridElement = document.getElementById('chicken-grid');
@@ -154,6 +154,7 @@ function endGame(win) {
         console.log("Système réinitialisé : Prêt pour une nouvelle partie.");
     }, 1000);
 }
+
 
 
 
